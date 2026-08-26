@@ -81,84 +81,428 @@ export interface VariableDefinition {
  *    { defaultValue: { x: 5, y: 10 }, type: 'object', schema: '{ x: number, y: number }' }
  */
 export const variableDefinitions: Record<string, VariableDefinition> = {
-    // ========================================
-    // ADD YOUR VARIABLES HERE
-    // ========================================
-
-    // Uncomment and modify these examples for your lesson:
-
-    /*
-    // ─────────────────────────────────────────
-    // NUMBER - Use with sliders
-    // ─────────────────────────────────────────
-    myValue: {
-        defaultValue: 5,
+    // ══════════════════════════════════════════════════════════════
+    // SECTION 2 — Why two arcs find the exact middle
+    // ══════════════════════════════════════════════════════════════
+    bisectorPointX: {
+        defaultValue: 246,
         type: 'number',
-        label: 'My Value',
-        description: 'A number that controls something',
-        unit: 'm',           // optional unit display
+        label: 'Point P — x',
+        description: 'Horizontal position of the draggable equidistant point P',
+        min: 30,
+        max: 630,
+        step: 1,
+        color: '#62D0AD',
+    },
+    bisectorPointY: {
+        defaultValue: 138,
+        type: 'number',
+        label: 'Point P — y',
+        description: 'Vertical position of the draggable equidistant point P',
+        min: 30,
+        max: 370,
+        step: 1,
+        color: '#62D0AD',
+    },
+    bisectorMarks: {
+        defaultValue: 0,
+        type: 'number',
+        label: 'Equidistant marks found',
+        description: 'How many equidistant spots the student has discovered',
         min: 0,
-        max: 10,
-        step: 0.5,
+        max: 40,
+        step: 1,
+        color: '#62D0AD',
     },
-
-    // ─────────────────────────────────────────
-    // TEXT - Free text input
-    // ─────────────────────────────────────────
-    lessonTitle: {
-        defaultValue: 'My Lesson',
-        type: 'text',
-        label: 'Lesson Title',
-        description: 'The title of your lesson',
-        placeholder: 'Enter a title...',
+    bisectorHighlight: {
+        defaultValue: '',
+        type: 'linkedHighlight',
+        label: 'Bisector figure highlight',
+        description: 'Which circle is highlighted in the equal-distance figure',
+        color: '#AC8BF9',
+        bgColor: 'rgba(172, 139, 249, 0.22)',
     },
-
-    // ─────────────────────────────────────────
-    // SELECT - Dropdown with options
-    // ─────────────────────────────────────────
-    difficulty: {
-        defaultValue: 'medium',
+    answerBisectorLocus: {
+        defaultValue: '',
         type: 'select',
-        label: 'Difficulty',
-        description: 'The difficulty level of the lesson',
-        options: ['easy', 'medium', 'hard', 'expert'],
+        label: 'Tilted line through the midpoint',
+        description: 'Student answer comparing a tilted line through M with the perpendicular bisector',
+        placeholder: '???',
+        correctAnswer: 'a bisector but not perpendicular',
+        options: [
+            'the same line drawn differently',
+            'a bisector but not perpendicular',
+            'perpendicular but not a bisector',
+            'neither of the two',
+        ],
+        color: '#8E90F5',
+    },
+    // ══════════════════════════════════════════════════════════════
+    // SECTION 3 — Perpendiculars
+    // ══════════════════════════════════════════════════════════════
+    perpPointX: {
+        defaultValue: 300,
+        type: 'number',
+        label: 'Point P — x',
+        description: 'Horizontal position of the draggable point P in the perpendicular figure',
+        min: 150,
+        max: 510,
+        step: 1,
+        color: '#62D0AD',
+    },
+    perpPointY: {
+        defaultValue: 152,
+        type: 'number',
+        label: 'Point P — y',
+        description: 'Vertical position of the draggable point P in the perpendicular figure',
+        min: 60,
+        max: 340,
+        step: 1,
+        color: '#62D0AD',
+    },
+    perpRadius: {
+        defaultValue: 130,
+        type: 'number',
+        label: 'Compass width',
+        description: 'Compass width used to cut the line at X and Y',
+        min: 78,
+        max: 195,
+        step: 13,
+        color: '#AC8BF9',
+    },
+    perpHighlight: {
+        defaultValue: '',
+        type: 'linkedHighlight',
+        label: 'Perpendicular figure highlight',
+        description: 'Which element of the perpendicular figure is highlighted',
+        color: '#AC8BF9',
+        bgColor: 'rgba(172, 139, 249, 0.22)',
+    },
+    answerPerpArcs: {
+        defaultValue: '',
+        type: 'select',
+        label: 'Rubbed-out arcs',
+        description: 'Student answer about erasing construction arcs',
+        placeholder: '???',
+        correctAnswer: 'incomplete, because the arcs are the working',
+        options: [
+            'correct, because the line is in the right place',
+            'incomplete, because the arcs are the working',
+            'correct, because arcs are only rough guides',
+        ],
+        color: '#8E90F5',
+    },
+    answerPerpShortest: {
+        defaultValue: '',
+        type: 'select',
+        label: 'Shortest distance to a line',
+        description: 'Student answer about the shortest segment from a point to a line',
+        placeholder: '???',
+        correctAnswer: 'the perpendicular, 5 cm long',
+        options: [
+            'the perpendicular, 5 cm long',
+            'a slanted segment, shorter than 5 cm',
+            'they are all exactly 5 cm',
+        ],
+        color: '#8E90F5',
     },
 
-    // ─────────────────────────────────────────
-    // BOOLEAN - Toggle switch
-    // ─────────────────────────────────────────
-    showHints: {
-        defaultValue: true,
-        type: 'boolean',
-        label: 'Show Hints',
-        description: 'Toggle to show or hide hints',
+    // ══════════════════════════════════════════════════════════════
+    // SECTION 4 — Angle bisector, copied angle, parallel line
+    // ══════════════════════════════════════════════════════════════
+    bisectAngle: {
+        defaultValue: 68,
+        type: 'number',
+        label: 'Angle at V',
+        description: 'The angle being bisected, in degrees',
+        unit: '°',
+        min: 20,
+        max: 140,
+        step: 1,
+        color: '#62D0AD',
+    },
+    bisectRadius: {
+        defaultValue: 130,
+        type: 'number',
+        label: 'First arc width',
+        description: 'Compass width of the first arc drawn from the vertex V',
+        min: 78,
+        max: 169,
+        step: 13,
+        color: '#AC8BF9',
+    },
+    bisectHighlight: {
+        defaultValue: '',
+        type: 'linkedHighlight',
+        label: 'Angle bisector figure highlight',
+        description: 'Which element of the angle bisector figure is highlighted',
+        color: '#AC8BF9',
+        bgColor: 'rgba(172, 139, 249, 0.22)',
+    },
+    parallelAngle: {
+        defaultValue: 34,
+        type: 'number',
+        label: 'Angle at P',
+        description: 'Angle between the transversal and the rotatable line through P',
+        unit: '°',
+        min: 8,
+        max: 70,
+        step: 1,
+        color: '#8E90F5',
+    },
+    answerAngleQuarter: {
+        defaultValue: '',
+        type: 'select',
+        label: 'Quarter of 138 degrees',
+        description: 'Student answer for bisecting 138 degrees twice',
+        placeholder: '???',
+        correctAnswer: '34.5',
+        options: ['34.5', '69', '27.6', '46'],
+        color: '#8E90F5',
+    },
+    answerAngleCongruence: {
+        defaultValue: '',
+        type: 'select',
+        label: 'Congruence reason',
+        description: 'Student answer for why the bisector triangles are congruent',
+        placeholder: '???',
+        correctAnswer: 'SSS, because all three sides match',
+        options: [
+            'SSS, because all three sides match',
+            'SAS, because the angle at V is shared',
+            'ASA, because two angles are equal',
+        ],
+        color: '#8E90F5',
     },
 
-    // ─────────────────────────────────────────
-    // ARRAY - List of numbers
-    // ─────────────────────────────────────────
-    dataPoints: {
-        defaultValue: [1, 4, 9, 16, 25],
-        type: 'array',
-        label: 'Data Points',
-        description: 'Y-values for plotting a graph',
+    // ══════════════════════════════════════════════════════════════
+    // SECTION 5 — Standard angles from one compass width
+    // ══════════════════════════════════════════════════════════════
+    dialAngle: {
+        defaultValue: 68,
+        type: 'number',
+        label: 'Angle on the dial',
+        description: 'Angle of the swinging arm on the constructible-angle dial',
+        unit: '°',
+        min: 0,
+        max: 180,
+        step: 1,
+        color: '#62D0AD',
+    },
+    dialRadius: {
+        defaultValue: 130,
+        type: 'number',
+        label: 'Compass width',
+        description: 'Radius of the dial circle, to show the angles do not depend on it',
+        min: 104,
+        max: 156,
+        step: 13,
+        color: '#AC8BF9',
+    },
+    dialHighlight: {
+        defaultValue: '',
+        type: 'linkedHighlight',
+        label: 'Angle dial highlight',
+        description: 'Which element of the angle dial is highlighted',
+        color: '#AC8BF9',
+        bgColor: 'rgba(172, 139, 249, 0.22)',
+    },
+    answerDialWidth: {
+        defaultValue: '',
+        type: 'select',
+        label: 'Nudged compass width',
+        description: 'Student answer about changing the compass width mid-construction',
+        placeholder: '???',
+        correctAnswer: 'not 60 degrees, because the triangle is no longer equilateral',
+        options: [
+            'still 60 degrees, since the width does not matter',
+            'not 60 degrees, because the triangle is no longer equilateral',
+            'exactly 30 degrees instead',
+        ],
+        color: '#8E90F5',
+    },
+    answerDialImpossible: {
+        defaultValue: '',
+        type: 'select',
+        label: 'Angle that cannot be built',
+        description: 'Student answer for which listed angle is not constructible here',
+        placeholder: '???',
+        correctAnswer: '20°',
+        options: ['15°', '20°', '45°', '135°'],
+        color: '#8E90F5',
     },
 
-    // ─────────────────────────────────────────
-    // OBJECT - Complex structured data
-    // ─────────────────────────────────────────
-    graphSettings: {
-        defaultValue: { 
-            xMin: -10, 
-            xMax: 10, 
-            showGrid: true 
-        },
-        type: 'object',
-        label: 'Graph Settings',
-        description: 'Configuration for the graph display',
-        schema: '{ xMin: number, xMax: number, showGrid: boolean }',
+    // ══════════════════════════════════════════════════════════════
+    // SECTION 6 — Tangents to a circle
+    // ══════════════════════════════════════════════════════════════
+    tangentPointX: {
+        defaultValue: 508,
+        type: 'number',
+        label: 'External point P — x',
+        description: 'Horizontal position of the draggable point P outside the circle',
+        min: 40,
+        max: 620,
+        step: 1,
+        color: '#62D0AD',
     },
-    */
+    tangentPointY: {
+        defaultValue: 316,
+        type: 'number',
+        label: 'External point P — y',
+        description: 'Vertical position of the draggable point P outside the circle',
+        min: 56,
+        max: 374,
+        step: 1,
+        color: '#62D0AD',
+    },
+    tangentRadius: {
+        defaultValue: 91,
+        type: 'number',
+        label: 'Circle radius',
+        description: 'Radius of the circle the tangents are drawn to',
+        min: 65,
+        max: 130,
+        step: 13,
+        color: '#AC8BF9',
+    },
+    tangentHighlight: {
+        defaultValue: '',
+        type: 'linkedHighlight',
+        label: 'Tangent figure highlight',
+        description: 'Which element of the tangent figure is highlighted',
+        color: '#AC8BF9',
+        bgColor: 'rgba(172, 139, 249, 0.22)',
+    },
+    answerTangentAngle: {
+        defaultValue: '',
+        type: 'select',
+        label: 'Tangent and radius angle',
+        description: 'Student answer for the angle between a tangent and the radius at the touch point',
+        placeholder: '???',
+        correctAnswer: '90°',
+        options: ['45°', '60°', '90°', 'it depends on the radius'],
+        color: '#8E90F5',
+    },
+    answerTangentLength: {
+        defaultValue: '',
+        type: 'select',
+        label: 'Tangent length',
+        description: 'Student answer for the tangent length from a point 13 cm from the centre',
+        placeholder: '???',
+        correctAnswer: '12',
+        options: ['8', '12', '13', '18'],
+        color: '#8E90F5',
+    },
+
+    // ══════════════════════════════════════════════════════════════
+    // SECTION 7 — Constructing triangles
+    // ══════════════════════════════════════════════════════════════
+    triangleCase: {
+        defaultValue: 'three sides',
+        type: 'select',
+        label: 'Triangle case',
+        description: 'Which set of given facts the triangle is built from',
+        options: ['three sides', 'two sides and the angle between', 'one side and two angles'],
+        color: '#8E90F5',
+        bgColor: 'rgba(142, 144, 245, 0.18)',
+    },
+    triangleSideAC: {
+        defaultValue: 182,
+        type: 'number',
+        label: 'Side AC',
+        description: 'Required length of side AC',
+        min: 104,
+        max: 234,
+        step: 13,
+        color: '#AC8BF9',
+    },
+    triangleSideBC: {
+        defaultValue: 156,
+        type: 'number',
+        label: 'Side BC',
+        description: 'Required length of side BC',
+        min: 104,
+        max: 234,
+        step: 13,
+        color: '#AC8BF9',
+    },
+    triangleAngleA: {
+        defaultValue: 50,
+        type: 'number',
+        label: 'Angle at A',
+        description: 'Required interior angle at vertex A',
+        unit: '°',
+        min: 25,
+        max: 105,
+        step: 5,
+        color: '#AC8BF9',
+    },
+    triangleAngleB: {
+        defaultValue: 40,
+        type: 'number',
+        label: 'Angle at B',
+        description: 'Required interior angle at vertex B',
+        unit: '°',
+        min: 25,
+        max: 105,
+        step: 5,
+        color: '#AC8BF9',
+    },
+    triangleVertexX: {
+        defaultValue: 306,
+        type: 'number',
+        label: 'Vertex C — x',
+        description: 'Horizontal position of the draggable third vertex',
+        min: 50,
+        max: 610,
+        step: 1,
+        color: '#62D0AD',
+    },
+    triangleVertexY: {
+        defaultValue: 174,
+        type: 'number',
+        label: 'Vertex C — y',
+        description: 'Vertical position of the draggable third vertex',
+        min: 56,
+        max: 300,
+        step: 1,
+        color: '#62D0AD',
+    },
+    answerTriangleImpossible: {
+        defaultValue: '',
+        type: 'select',
+        label: 'Impossible triangle',
+        description: 'Student answer about sides 3, 4 and 9 centimetres',
+        placeholder: '???',
+        correctAnswer: 'never meet, so no such triangle exists',
+        options: [
+            'cross at two points as usual',
+            'never meet, so no such triangle exists',
+            'touch at exactly one point',
+        ],
+        color: '#8E90F5',
+    },
+    answerTriangleThirdAngle: {
+        defaultValue: '',
+        type: 'select',
+        label: 'Third angle',
+        description: 'Student answer for the remaining angle in the ASA case',
+        placeholder: '???',
+        correctAnswer: '45°',
+        options: ['35°', '45°', '55°', '135°'],
+        color: '#8E90F5',
+    },
+
+    answerBisectorRadius: {
+        defaultValue: '',
+        type: 'select',
+        label: 'Smallest usable compass width',
+        description: 'Student answer for the smallest whole-number compass width on an 8 cm segment',
+        placeholder: '???',
+        correctAnswer: '5',
+        options: ['3', '4', '5', '8'],
+        color: '#8E90F5',
+    },
 };
 
 /**

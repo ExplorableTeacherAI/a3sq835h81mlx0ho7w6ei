@@ -5,6 +5,14 @@ import { type ReactElement } from "react";
 // Initialize variables and their colors from this file's variable definitions
 import { useVariableStore, initializeVariableColors } from "@/stores";
 import { getDefaultValues, variableDefinitions } from "./variables";
+import { introBlocks } from "./sections/construction/intro";
+import { perpendicularBisectorBlocks } from "./sections/construction/perpendicularBisector";
+import { perpendicularBlocks } from "./sections/construction/perpendiculars";
+import { angleBisectorBlocks } from "./sections/construction/angleBisector";
+import { standardAnglesBlocks } from "./sections/construction/standardAngles";
+import { tangentBlocks } from "./sections/construction/tangents";
+import { triangleBlocks } from "./sections/construction/triangles";
+import { wrapUpBlocks } from "./sections/construction/wrapUp";
 useVariableStore.getState().initialize(getDefaultValues());
 initializeVariableColors(variableDefinitions);
 
@@ -85,5 +93,12 @@ initializeVariableColors(variableDefinitions);
  */
 
 export const blocks: ReactElement[] = [
-    // Start adding your blocks here!
+    ...introBlocks,
+    ...perpendicularBisectorBlocks,
+    ...perpendicularBlocks,
+    ...angleBisectorBlocks,
+    ...standardAnglesBlocks,
+    ...tangentBlocks,
+    ...triangleBlocks,
+    ...wrapUpBlocks,
 ];
