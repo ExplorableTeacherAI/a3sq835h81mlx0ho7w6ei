@@ -405,7 +405,7 @@ export const perpendicularBisectorBlocks: ReactElement[] = [
         <Block id="bisector-steps-image" padding="sm">
             <ImageDisplay
                 id="image-bisector-steps"
-                src="/perpendicular-bisector-steps.svg"
+                src={`${import.meta.env.BASE_URL}perpendicular-bisector-steps.svg`}
                 alt="Four panels showing the perpendicular bisector of AB being constructed: the given segment, arcs drawn from A, matching arcs from B crossing at P and Q, and the finished line PQ meeting AB at right angles at M"
                 objectFit="contain"
                 color="#62D0AD"
