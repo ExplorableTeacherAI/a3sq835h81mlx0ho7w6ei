@@ -7,17 +7,21 @@ import {
     EditableParagraph,
     InlineClozeChoice,
     InlineFeedback,
+    InlineScrubbleNumber,
     InlineToggle,
+    InlineTooltip,
     InteractionHintSequence,
     Table,
+    TriggeredHintOverlay,
 } from "@/components/atoms";
-import { Figure, FigureSlider } from "@/components/molecules";
+import { Figure, FigureSlider, FormulaBlock } from "@/components/molecules";
 import { useVar, useSetVar } from "@/stores";
 import { type Vec2 } from "@/lib/motion";
 import {
     getVariableInfo,
     choicePropsFromDefinition,
     numberPropsFromDefinition,
+    scrubVarsFromDefinitions,
     togglePropsFromDefinition,
 } from "../../variables";
 import {
@@ -33,6 +37,7 @@ import {
     add,
     arcPath,
     cm,
+    cmLatex,
     dist,
     norm,
     scale,
@@ -286,8 +291,71 @@ function TriangleFigure() {
                     },
                 ]}
             />
+            <TriggeredHintOverlay hintKey="triangle-third-angle-hint" />
         </Figure>
     );
+}
+
+// ── The givens, spoken in the prose ──────────────────────────────────────────
+// Each case names its own facts, and every number is the slider's variable in
+// the violet the figure draws that arc or ray in.
+function TriangleGivensText() {
+    const mode = useVar<string>("triangleCase", "three sides");
+    const scrub = (name: string, format: (value: number) => string, id: string) => (
+        <InlineScrubbleNumber id={id} varName={name} {...numberPropsFromDefinition(getVariableInfo(name))} formatValue={format} />
+    );
+    const degrees = (value: number) => `${value}°`;
+    if (mode === "two sides and the angle between") {
+        return (
+            <>
+                with angle A = {scrub("triangleAngleA", degrees, "scrub-triangle-sas-angle-a")} and AC ={" "}
+                {scrub("triangleSideAC", cm, "scrub-triangle-sas-side-ac")}
+            </>
+        );
+    }
+    if (mode === "one side and two angles") {
+        return (
+            <>
+                with angle A = {scrub("triangleAngleA", degrees, "scrub-triangle-asa-angle-a")} and angle B ={" "}
+                {scrub("triangleAngleB", degrees, "scrub-triangle-asa-angle-b")}
+            </>
+        );
+    }
+    return (
+        <>
+            with AC = {scrub("triangleSideAC", cm, "scrub-triangle-sss-side-ac")} and BC ={" "}
+            {scrub("triangleSideBC", cm, "scrub-triangle-sss-side-bc")}
+        </>
+    );
+}
+
+// ── The givens as a formula, with the check each case needs ──────────────────
+// Three sides: the triangle inequality, live. Two angles: the third angle,
+// live. The scrubbable numbers are the same variables the sliders move.
+function TriangleGivensFormula() {
+    const mode = useVar<string>("triangleCase", "three sides");
+    const sideAC = useVar<number>("triangleSideAC", 182);
+    const sideBC = useVar<number>("triangleSideBC", 156);
+    const angleA = useVar<number>("triangleAngleA", 50);
+    const angleB = useVar<number>("triangleAngleB", 40);
+    const base = dist(A, B);
+    const variables = {
+        triangleSideAC: { ...scrubVarsFromDefinitions(["triangleSideAC"]).triangleSideAC, formatValue: (value: number) => cmLatex(value) },
+        triangleSideBC: { ...scrubVarsFromDefinitions(["triangleSideBC"]).triangleSideBC, formatValue: (value: number) => cmLatex(value) },
+        ...scrubVarsFromDefinitions(["triangleAngleA", "triangleAngleB"]),
+    };
+    let latex: string;
+    if (mode === "two sides and the angle between") {
+        latex = `AB = ${cmLatex(base)}, \\quad \\angle A = \\scrub{triangleAngleA}^\\circ, \\quad AC = \\scrub{triangleSideAC}`;
+    } else if (mode === "one side and two angles") {
+        const third = 180 - angleA - angleB;
+        latex = `\\angle C = 180^\\circ - \\scrub{triangleAngleA}^\\circ - \\scrub{triangleAngleB}^\\circ = \\textcolor{${third > 0 ? ACCENT : WARN}}{${third}^\\circ}`;
+    } else {
+        const reaches = sideAC + sideBC > base;
+        const verdict = reaches ? ACCENT : WARN;
+        latex = `AC + BC = \\scrub{triangleSideAC} + \\scrub{triangleSideBC} = \\textcolor{${verdict}}{${cmLatex(sideAC + sideBC)}} \\; \\textcolor{${verdict}}{${reaches ? ">" : "<"}} \\; AB = ${cmLatex(base)}`;
+    }
+    return <FormulaBlock latex={latex} variables={variables} />;
 }
 
 export const triangleBlocks: ReactElement[] = [
@@ -309,9 +377,9 @@ export const triangleBlocks: ReactElement[] = [
                     varName="triangleCase"
                     options={["three sides", "two sides and the angle between", "one side and two angles"]}
                     {...togglePropsFromDefinition(getVariableInfo("triangleCase"))}
-                />
-                , the base AB is already drawn, so drag C until every given fact is satisfied at
-                once.
+                />{" "}
+                <TriangleGivensText />, the base AB is already drawn, so drag C until every given
+                fact is satisfied at once.
             </EditableParagraph>
         </Block>
     </StackLayout>,
@@ -322,12 +390,25 @@ export const triangleBlocks: ReactElement[] = [
         </Block>
     </StackLayout>,
 
+    <StackLayout key="layout-triangle-givens-formula" maxWidth="xl">
+        <Block id="triangle-givens-formula" padding="md">
+            <TriangleGivensFormula />
+        </Block>
+    </StackLayout>,
+
     <StackLayout key="layout-triangle-reflect" maxWidth="xl">
         <Block id="triangle-reflect" padding="sm">
             <EditableParagraph id="para-triangle-reflect" blockId="triangle-reflect">
                 There was only one place C could land, plus its mirror image below AB. That is
-                the whole meaning of SSS, SAS and ASA: three facts pin a triangle down so
-                completely that everybody who follows the instructions draws the same shape.
+                the whole meaning of{" "}
+                <InlineTooltip
+                    id="tooltip-triangle-cases"
+                    tooltip="Side-Side-Side, Side-Angle-Side and Angle-Side-Angle: the three sets of facts that fix a triangle completely, so any two triangles sharing them are congruent."
+                >
+                    SSS, SAS and ASA
+                </InlineTooltip>
+                : three facts pin a triangle down so completely that everybody who follows the
+                instructions draws the same shape.
             </EditableParagraph>
         </Block>
     </StackLayout>,

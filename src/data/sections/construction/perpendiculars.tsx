@@ -8,10 +8,13 @@ import {
     InlineClozeChoice,
     InlineFeedback,
     InlineLinkedHighlight,
+    InlineScrubbleNumber,
+    InlineTooltip,
     InteractionHintSequence,
     Table,
+    TriggeredHintOverlay,
 } from "@/components/atoms";
-import { Figure, FigureSlider } from "@/components/molecules";
+import { Figure, FigureSlider, FormulaBlock } from "@/components/molecules";
 import { useVar, useSetVar } from "@/stores";
 import { type Vec2 } from "@/lib/motion";
 import {
@@ -19,6 +22,7 @@ import {
     choicePropsFromDefinition,
     linkedHighlightPropsFromDefinition,
     numberPropsFromDefinition,
+    scrubVarsFromDefinitions,
 } from "../../variables";
 import {
     ACCENT,
@@ -35,6 +39,7 @@ import {
     arcPath,
     circleIntersections,
     cm,
+    cmLatex,
     sub,
     useSvgPointer,
 } from "./kit";
@@ -239,7 +244,29 @@ function PerpendicularFigure() {
                     },
                 ]}
             />
+            <TriggeredHintOverlay hintKey="perp-shortest-hint" />
         </Figure>
+    );
+}
+
+// ── The two equal widths as a formula ────────────────────────────────────────
+// PX and PY wear the circle's violet and pop it on hover; the width itself is
+// the same scrubbable variable the slider moves, so dragging the number here
+// widens the circle above.
+function EqualWidthsFormula() {
+    const py = useVar<number>("perpPointY", START.y);
+    const radius = useVar<number>("perpRadius", 130);
+    const reaches = radius > Math.abs(py - LINE_Y) + 6;
+    return (
+        <FormulaBlock
+            latex={
+                reaches
+                    ? "\\highlight{chord}{PX} = \\highlight{chord}{PY} = \\scrub{perpRadius}"
+                    : "\\scrub{perpRadius} \\; \\textcolor{#F7B23B}{\\text{is too small: the circle misses the line}}"
+            }
+            variables={{ perpRadius: { ...scrubVarsFromDefinitions(["perpRadius"]).perpRadius, formatValue: (value) => cmLatex(value) } }}
+            linkedHighlights={{ chord: { varName: "perpHighlight", color: ARC } }}
+        />
     );
 }
 
@@ -257,7 +284,14 @@ export const perpendicularBlocks: ReactElement[] = [
             <EditableParagraph id="para-perp-setup" blockId="perp-setup">
                 Textbooks give you two separate constructions here, one for a point sitting on
                 the line and one for a point floating above it. Drag P between those two
-                positions and watch the{" "}
+                positions, open the compasses to{" "}
+                <InlineScrubbleNumber
+                    id="scrub-perp-radius"
+                    varName="perpRadius"
+                    {...numberPropsFromDefinition(getVariableInfo("perpRadius"))}
+                    formatValue={(value) => cm(value)}
+                />
+                , and watch the{" "}
                 <InlineLinkedHighlight
                     varName="perpHighlight"
                     highlightId="chord"
@@ -276,15 +310,29 @@ export const perpendicularBlocks: ReactElement[] = [
         </Block>
     </StackLayout>,
 
+    <StackLayout key="layout-perp-equal-widths-formula" maxWidth="xl">
+        <Block id="perp-equal-widths-formula" padding="md">
+            <EqualWidthsFormula />
+        </Block>
+    </StackLayout>,
+
     <StackLayout key="layout-perp-reflect" maxWidth="xl">
         <Block id="perp-reflect" padding="sm">
             <EditableParagraph id="para-perp-reflect" blockId="perp-reflect">
-                X and Y are both one compass width from P, so P already sits on the
-                perpendicular bisector of XY. That is why{" "}
+                X and Y are both one compass width from P, so P already sits on the{" "}
+                <InlineTooltip
+                    id="tooltip-perp-bisector-xy"
+                    tooltip="The line through the midpoint of XY at 90 degrees. Every point on it is the same distance from X as from Y, and P is one of those points."
+                >
+                    perpendicular bisector of XY
+                </InlineTooltip>
+                . That is why{" "}
                 <InlineLinkedHighlight
                     varName="perpHighlight"
                     highlightId="perp"
                     {...linkedHighlightPropsFromDefinition(getVariableInfo("perpHighlight"))}
+                    color={ACCENT}
+                    bgColor="rgba(98, 208, 173, 0.2)"
                 >
                     the line you finally draw
                 </InlineLinkedHighlight>{" "}

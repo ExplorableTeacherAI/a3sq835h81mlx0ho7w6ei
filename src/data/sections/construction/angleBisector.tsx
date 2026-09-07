@@ -7,11 +7,16 @@ import {
     EditableParagraph,
     InlineClozeChoice,
     InlineFeedback,
+    InlineFormula,
     InlineLinkedHighlight,
+    InlineScrubbleNumber,
+    InlineTooltip,
+    InlineTrigger,
     InteractionHintSequence,
     Table,
+    TriggeredHintOverlay,
 } from "@/components/atoms";
-import { Figure, FigureSlider } from "@/components/molecules";
+import { Figure, FigureSlider, FormulaBlock } from "@/components/molecules";
 import { useVar, useSetVar } from "@/stores";
 import { type Vec2 } from "@/lib/motion";
 import {
@@ -19,6 +24,7 @@ import {
     choicePropsFromDefinition,
     linkedHighlightPropsFromDefinition,
     numberPropsFromDefinition,
+    scrubVarsFromDefinitions,
 } from "../../variables";
 import {
     ACCENT,
@@ -281,7 +287,23 @@ function AngleBisectorFigure() {
                     },
                 ]}
             />
+            <TriggeredHintOverlay hintKey="angle-congruence-hint" />
         </Figure>
+    );
+}
+
+// ── The halved angle as a formula ────────────────────────────────────────────
+// The whole angle is the same scrubbable variable the arm swings, each half is
+// derived live in the bisector's teal, and hovering the halves pops ray VR.
+function HalfAngleFormula() {
+    const theta = useVar<number>("bisectAngle", 68);
+    const half = (theta / 2).toFixed(theta % 2 === 0 ? 0 : 1);
+    return (
+        <FormulaBlock
+            latex={`\\angle PVQ = \\scrub{bisectAngle}^\\circ \\quad\\Rightarrow\\quad \\highlight{bisector}{\\angle PVR} = \\highlight{bisector}{\\angle QVR} = \\frac{\\scrub{bisectAngle}^\\circ}{2} = \\textcolor{${ACCENT}}{${half}^\\circ}`}
+            variables={scrubVarsFromDefinitions(["bisectAngle"])}
+            linkedHighlights={{ bisector: { varName: "bisectHighlight", color: ACCENT } }}
+        />
     );
 }
 
@@ -523,7 +545,14 @@ export const angleBisectorBlocks: ReactElement[] = [
         <Block id="angle-setup" padding="sm">
             <EditableParagraph id="para-angle-setup" blockId="angle-setup">
                 Halving an angle sounds harder than halving a line, and it is not. Swing the
-                upper arm to any angle you like and look at the two shaded triangles:{" "}
+                upper arm to any angle you like, say{" "}
+                <InlineScrubbleNumber
+                    id="scrub-bisect-angle"
+                    varName="bisectAngle"
+                    {...numberPropsFromDefinition(getVariableInfo("bisectAngle"))}
+                    formatValue={(value) => `${value}°`}
+                />
+                , and look at the two shaded triangles:{" "}
                 <InlineLinkedHighlight
                     varName="bisectHighlight"
                     highlightId="equalRadii"
@@ -550,15 +579,30 @@ export const angleBisectorBlocks: ReactElement[] = [
         </Block>
     </StackLayout>,
 
+    <StackLayout key="layout-angle-half-formula" maxWidth="xl">
+        <Block id="angle-half-formula" padding="md">
+            <HalfAngleFormula />
+        </Block>
+    </StackLayout>,
+
     <StackLayout key="layout-angle-reflect" maxWidth="xl">
         <Block id="angle-reflect" padding="sm">
             <EditableParagraph id="para-angle-reflect" blockId="angle-reflect">
                 VR belongs to both triangles, so all three sides match and the triangles are
-                congruent by SSS. Matching triangles have matching angles, which forces{" "}
+                congruent by{" "}
+                <InlineTooltip
+                    id="tooltip-angle-sss"
+                    tooltip="Side-Side-Side: when the three sides of one triangle equal the three sides of another, the two triangles are congruent, angles included."
+                >
+                    SSS
+                </InlineTooltip>
+                . Matching triangles have matching angles, which forces{" "}
                 <InlineLinkedHighlight
                     varName="bisectHighlight"
                     highlightId="bisector"
                     {...linkedHighlightPropsFromDefinition(getVariableInfo("bisectHighlight"))}
+                    color={ACCENT}
+                    bgColor="rgba(98, 208, 173, 0.2)"
                 >
                     the ray VR
                 </InlineLinkedHighlight>{" "}
@@ -649,7 +693,14 @@ export const angleBisectorBlocks: ReactElement[] = [
             <EditableParagraph id="para-angle-parallel-setup" blockId="angle-parallel-setup">
                 Copying an angle is the whole secret to drawing a parallel. Rotate the line
                 through P below, and keep an eye on the two dashed gaps down to line m as the
-                angle at P changes.
+                angle at P, now{" "}
+                <InlineScrubbleNumber
+                    id="scrub-parallel-angle"
+                    varName="parallelAngle"
+                    {...numberPropsFromDefinition(getVariableInfo("parallelAngle"))}
+                    formatValue={(value) => `${value}°`}
+                />
+                , changes.
             </EditableParagraph>
         </Block>
     </StackLayout>,
@@ -663,9 +714,18 @@ export const angleBisectorBlocks: ReactElement[] = [
     <StackLayout key="layout-angle-parallel-reflect" maxWidth="xl">
         <Block id="angle-parallel-reflect" padding="sm">
             <EditableParagraph id="para-angle-parallel-reflect" blockId="angle-parallel-reflect">
-                The two gaps only agree at one setting, and it is the setting where both angles
-                read 56 degrees. Equal corresponding angles mean parallel lines, so copying the
-                angle at A up to P is all the work there is.
+                The two gaps only agree at{" "}
+                <InlineTrigger id="trigger-parallel-match" varName="parallelAngle" value={GIVEN_ANGLE} icon="zap">
+                    one setting
+                </InlineTrigger>
+                , the one where{" "}
+                <InlineFormula
+                    id="formula-parallel-equal-angles"
+                    latex="\clr{given}{\angle A} = \clr{copied}{\angle P} = 56^\circ"
+                    colorMap={{ given: INK_STRUCTURE, copied: ACCENT_TWO }}
+                />
+                . Equal corresponding angles mean parallel lines, so copying the angle at A up to
+                P is all the work there is.
             </EditableParagraph>
         </Block>
     </StackLayout>,
@@ -711,7 +771,7 @@ export const angleBisectorBlocks: ReactElement[] = [
         <Block id="angle-question-half" padding="md">
             <EditableParagraph id="para-angle-question-half" blockId="angle-question-half">
                 An angle of 138 degrees is bisected, and then one of the halves is bisected
-                again. The smallest angle you now have measures{" "}
+                again. Finish the working below to find{" "}
                 <InlineFeedback
                     varName="answerAngleQuarter"
                     correctValue="34.5"
@@ -720,15 +780,27 @@ export const angleBisectorBlocks: ReactElement[] = [
                     failureMessage="— close."
                     hint="Bisect once to get 69 degrees, then bisect that"
                 >
-                    <InlineClozeChoice
-                        varName="answerAngleQuarter"
-                        correctAnswer="34.5"
-                        options={["34.5", "69", "27.6", "46"]}
-                        {...choicePropsFromDefinition(getVariableInfo("answerAngleQuarter"))}
-                    />
+                    the smallest angle you are left with
                 </InlineFeedback>
-                {" "}degrees.
+                .
             </EditableParagraph>
+        </Block>
+    </StackLayout>,
+
+    <StackLayout key="layout-angle-question-half-formula" maxWidth="xl">
+        <Block id="angle-question-half-formula" padding="md">
+            <FormulaBlock
+                latex="\frac{138^\circ}{2} = 69^\circ \qquad \frac{69^\circ}{2} = \choice{answerAngleQuarter}^\circ"
+                clozeChoices={{
+                    answerAngleQuarter: {
+                        correctAnswer: "34.5",
+                        options: ["34.5", "69", "27.6", "46"],
+                        placeholder: "?",
+                        color: "#8E90F5",
+                        bgColor: "rgba(142, 144, 245, 0.18)",
+                    },
+                }}
+            />
         </Block>
     </StackLayout>,
 

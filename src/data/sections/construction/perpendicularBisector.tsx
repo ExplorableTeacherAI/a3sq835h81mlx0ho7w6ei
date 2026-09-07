@@ -8,11 +8,14 @@ import {
     InlineClozeChoice,
     ImageDisplay,
     InlineFeedback,
+    InlineFormula,
     InlineLinkedHighlight,
+    InlineTrigger,
     InteractionHintSequence,
     Table,
+    TriggeredHintOverlay,
 } from "@/components/atoms";
-import { Figure } from "@/components/molecules";
+import { Figure, FormulaBlock } from "@/components/molecules";
 import { useVar, useSetVar } from "@/stores";
 import { type Vec2 } from "@/lib/motion";
 import {
@@ -32,6 +35,7 @@ import {
     INK_STRUCTURE,
     RightAngleMark,
     cm,
+    cmLatex,
     dist,
     useSvgPointer,
 } from "./kit";
@@ -39,10 +43,10 @@ import {
 // ── View model ───────────────────────────────────────────────────────────────
 
 const WIDTH = 660;
-const HEIGHT = 400;
-const A: Vec2 = { x: 180, y: 262 };
-const B: Vec2 = { x: 470, y: 262 };
-const START: Vec2 = { x: 246, y: 138 };
+const HEIGHT = 520; // AB sits mid-frame so the circles have room above AND below it
+const A: Vec2 = { x: 180, y: 292 };
+const B: Vec2 = { x: 470, y: 292 };
+const START: Vec2 = { x: 246, y: 168 };
 const MATCH_TOLERANCE = 4; // px
 const REVEAL_AFTER = 5; // matched marks before the line appears
 
@@ -101,7 +105,7 @@ function EqualDistanceDrawing({ trail, onMatch }: DrawingProps) {
                     {`distance to A = ${cm(distanceToA)}`}
                 </text>
                 <text
-                    x={WIDTH - 28}
+                    x={WIDTH - 64}
                     y={40}
                     fill={matched ? ACCENT : ACCENT_TWO}
                     fontWeight="600"
@@ -256,7 +260,32 @@ function EqualDistanceFigure() {
                     },
                 ]}
             />
+            <TriggeredHintOverlay hintKey="bisector-locus-hint" />
         </Figure>
+    );
+}
+
+// ── The two distances as a formula, reading the same store as the figure ─────
+// PA wears the colour of the circle around A, PB the colour of the circle
+// around B; hovering either pops that circle above, and the sign between them
+// turns teal the moment P lands on the locus.
+function EqualDistanceFormula() {
+    const px = useVar<number>("bisectorPointX", START.x);
+    const py = useVar<number>("bisectorPointY", START.y);
+    const P: Vec2 = { x: px, y: py };
+    const distanceToA = dist(P, A);
+    const distanceToB = dist(P, B);
+    const matched = Math.abs(distanceToA - distanceToB) < MATCH_TOLERANCE;
+    const relation = matched ? "=" : distanceToA > distanceToB ? ">" : "<";
+    return (
+        <FormulaBlock
+            latex={`\\highlight{arcA}{PA} = \\textcolor{${ARC}}{${cmLatex(distanceToA)}} \\quad \\clr{verdict}{${relation}} \\quad \\highlight{arcB}{PB} = \\textcolor{${ACCENT_TWO}}{${cmLatex(distanceToB)}}`}
+            colorMap={{ verdict: matched ? ACCENT : INK }}
+            linkedHighlights={{
+                arcA: { varName: "bisectorHighlight", color: ARC },
+                arcB: { varName: "bisectorHighlight", color: ACCENT_TWO },
+            }}
+        />
     );
 }
 
@@ -287,11 +316,17 @@ export const perpendicularBisectorBlocks: ReactElement[] = [
                     varName="bisectorHighlight"
                     highlightId="arcB"
                     {...linkedHighlightPropsFromDefinition(getVariableInfo("bisectorHighlight"))}
+                    color={ACCENT_TWO}
+                    bgColor="rgba(142, 144, 245, 0.2)"
                 >
                     circle around B
                 </InlineLinkedHighlight>{" "}
                 both follow the teal point P, so drag P around and hunt for the spots where
-                the two distances read exactly the same.
+                the two distances read exactly the same. One place that always works is{" "}
+                <InlineTrigger id="trigger-bisector-midline" varName="bisectorPointX" value={MIDPOINT.x} icon="zap">
+                    directly above or below the middle of AB
+                </InlineTrigger>
+                .
             </EditableParagraph>
         </Block>
     </StackLayout>,
@@ -302,11 +337,22 @@ export const perpendicularBisectorBlocks: ReactElement[] = [
         </Block>
     </StackLayout>,
 
+    <StackLayout key="layout-bisector-distance-formula" maxWidth="xl">
+        <Block id="bisector-distance-formula" padding="md">
+            <EqualDistanceFormula />
+        </Block>
+    </StackLayout>,
+
     <StackLayout key="layout-bisector-reflect" maxWidth="xl">
         <Block id="bisector-reflect" padding="sm">
             <EditableParagraph id="para-bisector-reflect" blockId="bisector-reflect">
-                Your marks do not scatter. Every point that is equally far from A and from B lands
-                on one straight line, and that line cuts AB in half at a right angle. Open your
+                Your marks do not scatter. Every point with{" "}
+                <InlineFormula
+                    id="formula-bisector-locus"
+                    latex="\clr{arcA}{PA} = \clr{arcB}{PB}"
+                    colorMap={{ arcA: ARC, arcB: ACCENT_TWO }}
+                />
+                {" "}lands on one straight line, and that line cuts AB in half at a right angle. Open your
                 compasses to any width past halfway and the two arcs must cross on that same
                 line, which is why the construction never depends on your measuring.
             </EditableParagraph>

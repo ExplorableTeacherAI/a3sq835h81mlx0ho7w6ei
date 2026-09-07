@@ -7,11 +7,15 @@ import {
     EditableParagraph,
     InlineClozeChoice,
     InlineFeedback,
+    InlineFormula,
     InlineLinkedHighlight,
+    InlineScrubbleNumber,
+    InlineTooltip,
     InteractionHintSequence,
     Table,
+    TriggeredHintOverlay,
 } from "@/components/atoms";
-import { Figure, FigureSlider } from "@/components/molecules";
+import { Figure, FigureSlider, FormulaBlock } from "@/components/molecules";
 import { useVar, useSetVar } from "@/stores";
 import { type Vec2 } from "@/lib/motion";
 import {
@@ -19,6 +23,7 @@ import {
     choicePropsFromDefinition,
     linkedHighlightPropsFromDefinition,
     numberPropsFromDefinition,
+    scrubVarsFromDefinitions,
 } from "../../variables";
 import {
     ACCENT,
@@ -32,6 +37,7 @@ import {
     add,
     circleIntersections,
     cm,
+    cmLatex,
     dist,
     mid,
     norm,
@@ -253,7 +259,34 @@ function TangentFigure() {
                     },
                 ]}
             />
+            <TriggeredHintOverlay hintKey="tangent-length-hint" />
         </Figure>
+    );
+}
+
+// ── The tangent length as a formula ──────────────────────────────────────────
+// Pythagoras in the right triangle OTP: OP is read live from the figure, r is
+// the slider's own scrubbable variable in the radius lines' teal, and PT comes
+// out in the tangents' teal. Hovering PT or r pops the matching lines above.
+function TangentLengthFormula() {
+    const px = useVar<number>("tangentPointX", START.x);
+    const py = useVar<number>("tangentPointY", START.y);
+    const R = useVar<number>("tangentRadius", 91);
+    const centreDistance = dist(O, { x: px, y: py });
+    const onTheCircle = Math.abs(centreDistance - R) < 5;
+    const tangentLength = Math.sqrt(Math.max(0, centreDistance * centreDistance - R * R));
+    const latex = onTheCircle
+        ? `OP = r = \\scrub{tangentRadius} \\quad\\Rightarrow\\quad \\highlight{tangent}{PT} = \\textcolor{${ACCENT}}{0\\,\\text{cm}}\\text{: P is the touch point}`
+        : `\\highlight{tangent}{PT} = \\sqrt{OP^2 - \\highlight{radius}{r}^2}, \\quad OP = \\textcolor{${INK}}{${cmLatex(centreDistance)}}, \\; r = \\scrub{tangentRadius} \\quad\\Rightarrow\\quad \\highlight{tangent}{PT} = \\textcolor{${ACCENT}}{${cmLatex(tangentLength)}}`;
+    return (
+        <FormulaBlock
+            latex={latex}
+            variables={{ tangentRadius: { ...scrubVarsFromDefinitions(["tangentRadius"]).tangentRadius, formatValue: (value) => cmLatex(value) } }}
+            linkedHighlights={{
+                tangent: { varName: "tangentHighlight", color: ACCENT },
+                radius: { varName: "tangentHighlight", color: ACCENT },
+            }}
+        />
     );
 }
 
@@ -269,8 +302,22 @@ export const tangentBlocks: ReactElement[] = [
     <StackLayout key="layout-tangent-setup" maxWidth="xl">
         <Block id="tangent-setup" padding="sm">
             <EditableParagraph id="para-tangent-setup" blockId="tangent-setup">
-                A tangent brushes a circle at one point and never cuts through it. Drag P slowly
-                in towards the rim and watch the{" "}
+                A{" "}
+                <InlineTooltip
+                    id="tooltip-tangent-definition"
+                    tooltip="A tangent is a straight line that touches the circle at exactly one point and never passes inside it."
+                >
+                    tangent
+                </InlineTooltip>{" "}
+                brushes a circle at one point and never cuts through it. The circle below has
+                radius{" "}
+                <InlineScrubbleNumber
+                    id="scrub-tangent-radius"
+                    varName="tangentRadius"
+                    {...numberPropsFromDefinition(getVariableInfo("tangentRadius"))}
+                    formatValue={(value) => cm(value)}
+                />
+                . Drag P slowly in towards the rim and watch the{" "}
                 <InlineLinkedHighlight
                     varName="tangentHighlight"
                     highlightId="helper"
@@ -289,20 +336,36 @@ export const tangentBlocks: ReactElement[] = [
         </Block>
     </StackLayout>,
 
+    <StackLayout key="layout-tangent-length-formula" maxWidth="xl">
+        <Block id="tangent-length-formula" padding="md">
+            <TangentLengthFormula />
+        </Block>
+    </StackLayout>,
+
     <StackLayout key="layout-tangent-reflect" maxWidth="xl">
         <Block id="tangent-reflect" padding="sm">
             <EditableParagraph id="para-tangent-reflect" blockId="tangent-reflect">
-                OP is a diameter of that helper circle, and an angle standing on a diameter is
-                always 90 degrees. So{" "}
+                OP is a diameter of that helper circle, and an{" "}
+                <InlineTooltip
+                    id="tooltip-tangent-semicircle"
+                    tooltip="The angle in a semicircle: join the two ends of a diameter to any point on the circle and the angle at that point is always a right angle."
+                >
+                    angle standing on a diameter
+                </InlineTooltip>{" "}
+                is always 90 degrees. So{" "}
                 <InlineLinkedHighlight
                     varName="tangentHighlight"
                     highlightId="radius"
                     {...linkedHighlightPropsFromDefinition(getVariableInfo("tangentHighlight"))}
+                    color={ACCENT}
+                    bgColor="rgba(98, 208, 173, 0.2)"
                 >
                     each radius
                 </InlineLinkedHighlight>{" "}
-                meets its tangent square on, which is exactly what a tangent has to do. Push P
-                right onto the rim and the two tangents become the single one.
+                meets its tangent square on,{" "}
+                <InlineFormula id="formula-tangent-right-angle" latex="\clr{right}{\angle OTP} = 90^\circ" colorMap={{ right: ACCENT }} />
+                , which is exactly what a tangent has to do. Push P right onto the rim and the two
+                tangents become the single one.
             </EditableParagraph>
         </Block>
     </StackLayout>,

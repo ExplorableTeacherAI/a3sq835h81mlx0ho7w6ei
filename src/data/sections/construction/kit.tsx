@@ -213,4 +213,6 @@ export const RightAngleMark: React.FC<{ at: Vec2; d1: Vec2; d2: Vec2; size?: num
 /** Pixels per "centimetre" used by every construction figure's readouts. */
 export const PX_PER_CM = 26;
 export const cm = (px: number): string => `${(px / PX_PER_CM).toFixed(1)} cm`;
+/** The same length for KaTeX (braces kept out of \clr and \highlight arguments). */
+export const cmLatex = (px: number): string => `${(px / PX_PER_CM).toFixed(1)}\\,\\text{cm}`;
 export const deg = (radians: number): string => `${Math.round((radians * 180) / Math.PI)}°`;

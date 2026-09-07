@@ -95,12 +95,12 @@ export const variableDefinitions: Record<string, VariableDefinition> = {
         color: '#62D0AD',
     },
     bisectorPointY: {
-        defaultValue: 138,
+        defaultValue: 168,
         type: 'number',
         label: 'Point P — y',
         description: 'Vertical position of the draggable equidistant point P',
         min: 30,
-        max: 370,
+        max: 490,
         step: 1,
         color: '#62D0AD',
     },
@@ -363,7 +363,7 @@ export const variableDefinitions: Record<string, VariableDefinition> = {
         min: 65,
         max: 130,
         step: 13,
-        color: '#AC8BF9',
+        color: '#62D0AD',
     },
     tangentHighlight: {
         defaultValue: '',

@@ -7,11 +7,15 @@ import {
     EditableParagraph,
     InlineClozeChoice,
     InlineFeedback,
+    InlineFormula,
     InlineLinkedHighlight,
+    InlineScrubbleNumber,
+    InlineTooltip,
     InteractionHintSequence,
     Table,
+    TriggeredHintOverlay,
 } from "@/components/atoms";
-import { Figure, FigureSlider } from "@/components/molecules";
+import { Figure, FigureSlider, FormulaBlock } from "@/components/molecules";
 import { useVar, useSetVar } from "@/stores";
 import { type Vec2 } from "@/lib/motion";
 import {
@@ -19,6 +23,7 @@ import {
     choicePropsFromDefinition,
     linkedHighlightPropsFromDefinition,
     numberPropsFromDefinition,
+    scrubVarsFromDefinitions,
 } from "../../variables";
 import {
     ACCENT,
@@ -34,6 +39,7 @@ import {
     angleOf,
     arcPath,
     cm,
+    cmLatex,
     fromAngle,
     scale,
     sub,
@@ -242,9 +248,21 @@ function AngleDialFigure() {
                     },
                 ]}
             />
+            <TriggeredHintOverlay hintKey="dial-impossible-hint" />
         </Figure>
     );
 }
+
+// ── Why one compass width gives 60 degrees, as a formula ─────────────────────
+// The width is the slider's own variable in the circle's violet; the 60° pops
+// the six-step hexagon above on hover.
+const SixtyDegreesFormula = () => (
+    <FormulaBlock
+        latex="\text{chord} = \text{radius} = \scrub{dialRadius} \quad\Rightarrow\quad \frac{360^\circ}{6} = \highlight{hexagon}{60^\circ}"
+        variables={{ dialRadius: { ...scrubVarsFromDefinitions(["dialRadius"]).dialRadius, formatValue: (value) => cmLatex(value) } }}
+        linkedHighlights={{ hexagon: { varName: "dialHighlight", color: ARC } }}
+    />
+);
 
 export const standardAnglesBlocks: ReactElement[] = [
     <StackLayout key="layout-dial-heading" maxWidth="xl">
@@ -258,8 +276,15 @@ export const standardAnglesBlocks: ReactElement[] = [
     <StackLayout key="layout-dial-setup" maxWidth="xl">
         <Block id="dial-setup" padding="sm">
             <EditableParagraph id="para-dial-setup" blockId="dial-setup">
-                Set your compasses to any width and step that width around its own circle. It
-                lands back where it started after exactly{" "}
+                Set your compasses to any width, say{" "}
+                <InlineScrubbleNumber
+                    id="scrub-dial-radius"
+                    varName="dialRadius"
+                    {...numberPropsFromDefinition(getVariableInfo("dialRadius"))}
+                    formatValue={(value) => cm(value)}
+                />
+                , and step that width around its own circle. It lands back where it started after
+                exactly{" "}
                 <InlineLinkedHighlight
                     varName="dialHighlight"
                     highlightId="hexagon"
@@ -267,7 +292,14 @@ export const standardAnglesBlocks: ReactElement[] = [
                 >
                     six steps
                 </InlineLinkedHighlight>
-                . Swing the arm below and see which angles the compasses will give you.
+                . Swing the arm below, now at{" "}
+                <InlineScrubbleNumber
+                    id="scrub-dial-angle"
+                    varName="dialAngle"
+                    {...numberPropsFromDefinition(getVariableInfo("dialAngle"))}
+                    formatValue={(value) => `${Math.round(value)}°`}
+                />
+                , and see which angles the compasses will give you.
             </EditableParagraph>
         </Block>
     </StackLayout>,
@@ -278,12 +310,25 @@ export const standardAnglesBlocks: ReactElement[] = [
         </Block>
     </StackLayout>,
 
+    <StackLayout key="layout-dial-sixty-formula" maxWidth="xl">
+        <Block id="dial-sixty-formula" padding="md">
+            <SixtyDegreesFormula />
+        </Block>
+    </StackLayout>,
+
     <StackLayout key="layout-dial-reflect" maxWidth="xl">
         <Block id="dial-reflect" padding="sm">
             <EditableParagraph id="para-dial-reflect" blockId="dial-reflect">
-                Six equal steps around a full turn means each step is 60 degrees, and the chord
-                equals the radius because the triangle it makes is equilateral. Halving 60 gives
-                30, halving again gives 15, and every other{" "}
+                Six equal steps around a full turn means each step is{" "}
+                <InlineFormula id="formula-dial-sixty" latex="\frac{360^\circ}{6} = 60^\circ" colorMap={{}} />
+                , and the chord equals the radius because the triangle it makes is{" "}
+                <InlineTooltip
+                    id="tooltip-dial-equilateral"
+                    tooltip="All three sides are one compass width, so all three angles are equal, and three equal angles adding to 180 degrees are 60 degrees each."
+                >
+                    equilateral
+                </InlineTooltip>
+                . Halving 60 gives 30, halving again gives 15, and every other{" "}
                 <InlineLinkedHighlight
                     varName="dialHighlight"
                     highlightId="ticks"

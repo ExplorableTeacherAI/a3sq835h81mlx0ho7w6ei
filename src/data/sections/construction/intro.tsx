@@ -1,7 +1,7 @@
 import { type ReactElement } from "react";
 import { StackLayout } from "@/components/layouts";
 import { Block } from "@/components/templates";
-import { EditableH1, EditableH2, EditableParagraph, Table } from "@/components/atoms";
+import { EditableH1, EditableH2, EditableParagraph, InlineTooltip, Table } from "@/components/atoms";
 
 export const introBlocks: ReactElement[] = [
     <StackLayout key="layout-intro-title" maxWidth="xl">
@@ -30,7 +30,20 @@ export const introBlocks: ReactElement[] = [
                 fifteen constructions, and you will see that every single one runs on the
                 same idea you already know: every point on a circle sits the same distance
                 from its centre. Keep two more facts close by, because you will need them
-                as proof: triangles with matching sides are congruent, and an isosceles
+                as proof: triangles with matching sides are{" "}
+                <InlineTooltip
+                    id="tooltip-intro-congruent"
+                    tooltip="Congruent triangles are identical in every side and every angle, so anything true of one is true of the other."
+                >
+                    congruent
+                </InlineTooltip>
+                , and an{" "}
+                <InlineTooltip
+                    id="tooltip-intro-isosceles"
+                    tooltip="An isosceles triangle has two equal sides, and the two angles opposite those sides are equal too."
+                >
+                    isosceles
+                </InlineTooltip>{" "}
                 triangle has equal base angles.
             </EditableParagraph>
         </Block>
